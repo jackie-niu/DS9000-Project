@@ -1,19 +1,32 @@
+# src/models/knn.py
 import argparse
 from datetime import datetime
+import joblib
+import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn import metrics
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    average_precision_score,
+    confusion_matrix,
+    classification_report,
+)
+
 from src.preprocess import preprocess_data
 from src.utils import save_model, append_metrics_jsonl
-import matplotlib.pyplot as plt
+
 
 def main(args):
-    # Preprocess data
+    # Load preprocessed data
     X_train, X_test, y_train, y_test = preprocess_data(
         filepath=args.data,
         target=args.target
     )
 
-    # Try multiple K values
+    # Find best K
     k_range = range(1, 15)
     scores = []
 
@@ -21,62 +34,60 @@ def main(args):
         knn = KNeighborsClassifier(n_neighbors=k)
         knn.fit(X_train, y_train)
         y_pred = knn.predict(X_test)
-        scores.append(metrics.accuracy_score(y_test, y_pred))
+        scores.append(accuracy_score(y_test, y_pred))
 
-    # Plot accuracy vs K
-    plt.plot(k_range, scores, marker='o')
-    plt.xlabel('K')
-    plt.ylabel('Test Set Accuracy')
-    plt.title('KNN Accuracy vs K')
-    plt.xticks(k_range)
-    plt.show()
-
-    # Pick best K
     best_k = k_range[scores.index(max(scores))]
-    print(f"Best K is {best_k} with accuracy {max(scores):.4f}")
+    print(f"Best K is {best_k} with accuracy of {max(scores):.4f}")
 
-    # Train final model
+    # Train final model with best K
     final_knn = KNeighborsClassifier(n_neighbors=best_k)
     final_knn.fit(X_train, y_train)
     y_test_pred = final_knn.predict(X_test)
 
-    # Metrics
-    acc = metrics.accuracy_score(y_test, y_test_pred)
-    auc = metrics.roc_auc_score(y_test, y_test_pred)
-    precision = metrics.precision_score(y_test, y_test_pred, zero_division=0)
-    recall = metrics.recall_score(y_test, y_test_pred, zero_division=0)
-    f1 = metrics.f1_score(y_test, y_test_pred, zero_division=0)
-    avg_precision = metrics.average_precision_score(y_test, y_test_pred)
+    # Evaluate
+    acc = accuracy_score(y_test, y_test_pred)
+    prec = precision_score(y_test, y_test_pred, zero_division=0)
+    rec = recall_score(y_test, y_test_pred, zero_division=0)
+    f1 = f1_score(y_test, y_test_pred, zero_division=0)
+    roc_auc = roc_auc_score(y_test, y_test_pred) if y_test.nunique() == 2 else None
+    avg_prec = average_precision_score(y_test, y_test_pred) if y_test.nunique() == 2 else None
+    cm = confusion_matrix(y_test, y_test_pred)
 
-    print(f"Accuracy: {acc:.4%}")
-    print(f"AUC: {auc:.4f}")
-    print(f"Precision: {precision:.4%}")
-    print(f"Recall: {recall:.4%}")
-    print(f"F1 Score: {f1:.4%}")
-    print(f"Average Precision: {avg_precision:.4f}")
+    print("\n=== KNN (final) ===")
+    print(f"Accuracy: {acc:.4f}")
+    if roc_auc is not None:
+        print(f"ROC-AUC : {roc_auc:.4f}")
+    if avg_prec is not None:
+        print(f"Average Precision (PR-AUC): {avg_prec:.4f}")
+    print("Confusion matrix:\n", cm)
+    print("\nClassification report:\n", classification_report(y_test, y_test_pred))
 
-    # Save model and metrics
+    # Save model
     model_path = save_model(final_knn, "models/knn_best.joblib")
+    print(f"Saved model -> {model_path}")
+
+    # Append metrics
     metrics_record = {
         "timestamp": datetime.utcnow().isoformat(),
         "model": "knn",
         "best_k": best_k,
         "test_metrics": {
             "accuracy": float(acc),
-            "precision": float(precision),
-            "recall": float(recall),
+            "precision": float(prec),
+            "recall": float(rec),
             "f1": float(f1),
-            "roc_auc": float(auc),
-            "average_precision": float(avg_precision)
-        }
+            "roc_auc": float(roc_auc) if roc_auc is not None else None,
+            "average_precision": float(avg_prec) if avg_prec is not None else None,
+            "confusion_matrix": cm.tolist(),
+        },
     }
     metrics_path = append_metrics_jsonl(metrics_record, "models/metrics.jsonl")
-    print(f"Saved model to {model_path}")
     print(f"Appended metrics to {metrics_path}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", required=True, help="Path to your dataset (Excel/CSV handled in preprocess)")
+    parser.add_argument("--data", required=True, help="Path to dataset (Excel/CSV)")
     parser.add_argument("--target", required=True, help="Target column name (e.g., fraud_reported)")
     args = parser.parse_args()
     main(args)
