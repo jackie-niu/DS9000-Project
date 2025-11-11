@@ -27,6 +27,7 @@ DS9000-Project/
 │   ├── leaderboard.py         # Prints leaderboard of all model runs
 │   └── models/
 │       ├── xgboost_grid.py    # XGBoost model with GridSearchCV
+|       └── knn.py             # KNN model with manual K loop
 │
 └── requirements.txt
 ```
