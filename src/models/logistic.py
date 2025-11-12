@@ -111,7 +111,7 @@ def main(args):
     print("\nClassification report:\n", classification_report(y_test, y_pred))
 
     # Save model
-    model_path = save_model(best_model, "models/Logistic Regression_best.joblib")
+    model_path = save_model(best_model, "models/Logistic_Regression_best.joblib")
     print(f"Saved model -> {model_path}")
 
     metrics_record = {
