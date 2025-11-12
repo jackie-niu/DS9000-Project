@@ -44,12 +44,13 @@ def main(args):
     ]
 
     param_grid = {
-        "depth": [4, 6, 8],
-        "learning_rate": [0.03, 0.06, 0.1],
-        "l2_leaf_reg": [1, 3, 7],
-        "iterations": [300, 600],
-        "bagging_temperature": [0, 0.5, 1.0],
-        "random_strength": [1, 2]
+        "depth": [8,12],
+        "learning_rate": [0.01, 0.2],
+        "l2_leaf_reg": [4,6],
+        "iterations": [500],
+        "bagging_temperature": [0],
+        "random_strength": [2],
+        "od_wait": [50]
     }
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
