@@ -10,26 +10,46 @@ Each model runs independently but shares a common **preprocessing** and **metric
 ```
 DS9000-Project/
 │
-├── archive/                   # Legacy code
-│   └── Project_XGBoost.ipynb  # Original preprocessing and XGB implementation
+├── archive/                           # Legacy / exploratory notebooks
+│   ├── Project_CatBoost.ipynb
+│   ├── Project_KNN.ipynb
+│   ├── Project_Logistic.ipynb
+│   ├── Project_NN.ipynb              
+│   ├── Project_Random_Forest.ipynb
+│   ├── Project_SVM.ipynb
+│   ├── Project_XGBoost.ipynb         
+|
+├── catboost_info/                     # Auto-generated files from running CatBoost model
+|
+├── data/                              # Raw data files (Excel/CSV)
 │   └── Worksheet in Case Study question 2.xlsx
 │
-├── data/                      # Raw data files (Excel/CSV)
-│   └── Worksheet in Case Study question 2.xlsx
-│
-├── models/                    # Trained models + metrics storage
+├── models/                            # Saved trained models + metrics
+│   ├── CatBoost_best.joblib
+│   ├── knn_best.joblib
+│   ├── Logistic_Regression_best.joblib
+│   ├── Neural_Network_best.joblib
+│   ├── Random_Forest_best.joblib
+│   ├── svm_best.joblib
 │   ├── xgboost_best.joblib
-│   └── metrics.jsonl
+│   └── metrics.jsonl                  # JSONL log of all experiment runs
 │
 ├── src/
-│   ├── preprocess.py          # Shared preprocessing logic (load, clean, encode, split)
-│   ├── utils.py               # Helper functions (save_model, append_metrics_jsonl, etc.)
-│   ├── leaderboard.py         # Prints leaderboard of all model runs
-│   └── models/
-│       ├── xgboost_grid.py    # XGBoost model with GridSearchCV
-|       └── knn.py             # KNN model with manual K loop
+│   ├── leaderboard.py                 # Loads metrics.jsonl → prints ranked leaderboard
+│   ├── preprocess.py                  # Shared preprocessing routine (loading, cleaning)
+│   ├── preprocess_catboost.py         # CatBoost-specific preprocessing logic
+│   ├── utils.py                       # save_model, metrics logging, helpers
+│   │
+│   └── models/                        # Individual model training scripts
+│       ├── knn.py                     # KNN training + evaluation
+│       ├── logistic.py                # Logistic Regression pipeline
+│       ├── mycatboost.py              # CatBoost model configuration + training
+│       ├── neural_network.py          # MLP-based classifier
+│       ├── random_forest.py           # Random Forest classifier
+│       ├── svm.py                     # SVM classifier with tuning
+│       └── xgboost_grid.py            # XGBoost with GridSearchCV
 │
-└── requirements.txt
+└── requirements.txt           # Reproducible environment dependencies
 ```
 
 ---
